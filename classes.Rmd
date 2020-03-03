@@ -1,0 +1,58 @@
+---
+title: "Big Classes"
+author: "David Kane"
+date: "3/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(readxl)
+library(janitor)
+library(tidyverse)
+```
+
+
+```{r download_data, include=FALSE}
+# Using include=FALSE is a hack here, but I have trouble remembering how to turn
+# off the annoying messages from download.file(). It is useful to give things
+# sensible names, and to use those names in a consistent fashion. I have two
+# enrollments to worry about: current and old. So, I use those names three
+# times: the url, the new xlsx file and the R object.
+
+url_current <- "https://registrar.fas.harvard.edu/files/fas-registrar/files/class_enrollment_summary_by_term_2.25.20_0.xlsx"
+  
+url_old <-  "https://registrar.fas.harvard.edu/files/fas-registrar/files/class_enrollment_summary_by_term_3.22.19_0.xlsx" 
+  
+download.file(url = url_current,
+              destfile = "current.xlsx")
+
+download.file(url = url_old,
+              destfile = "old.xlsx")
+
+current <- read_excel("current.xlsx", skip = 3) %>% 
+  clean_names() %>% 
+  filter(! is.na(course_name))
+  
+old <- read_excel("old.xlsx", skip = 3) %>% 
+  clean_names() %>% 
+  filter(! is.na(course_name)) %>% 
+  select(course_id)
+
+
+
+
+```
+
+```{r}
+# Bring the data together, using course_id, but only keep the courses which are
+# new this year, meaning that the course_id did not exist in spring 2019.
+
+anti_join(current, old, by = "course_id" ) %>% 
+  arrange(desc(total)) %>% 
+  select(course_name, total) %>% 
+  slice(1:5)
+
+```
+
