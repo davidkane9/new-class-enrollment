@@ -8,6 +8,8 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
+library(fs)
+library(gt)
 library(readxl)
 library(janitor)
 library(tidyverse)
@@ -40,19 +42,33 @@ old <- read_excel("old.xlsx", skip = 3) %>%
   filter(! is.na(course_name)) %>% 
   select(course_id)
 
+# Nice practice to delete the xlsx files once we no longer need them. It is not
+# required that I keep them in the repo since I can (always?) download them
+# anytime I want.
 
-
-
+file_delete(c("current.xlsx", "old.xlsx"))
 ```
 
 ```{r}
 # Bring the data together, using course_id, but only keep the courses which are
-# new this year, meaning that the course_id did not exist in spring 2019.
+# new this year, meaning that the course_id did not exist in spring 2019. This
+# lists seems much more dominated by Gen Ed courses than it normally is,
+# probably because so much of the Gen Ed program was revamped this year. I think
+# that these are mostly new courses. But not all of them! The Incas has
+# definitely been around for several years. Did it used to be offered in the
+# Fall? Did they change its course id? These are the sorts of details we would
+# spend time investigating, if this were an actual project.
 
-anti_join(current, old, by = "course_id" ) %>% 
+anti_join(current, old, by = "course_id") %>% 
   arrange(desc(total)) %>% 
-  select(course_name, total) %>% 
-  slice(1:5)
-
+  select(course_title, course_name, total) %>% 
+  slice(1:5) %>% 
+  gt() %>% 
+    tab_header(title = "Five Largest New Harvard Courses",
+               subtitle = "General Education dominates") %>% 
+    tab_source_note(source_note = "Data from www.harvard.edu") %>% 
+    cols_label(course_title = "Number",
+               course_name = "Name",
+               total = "Enrollment")
 ```
 
